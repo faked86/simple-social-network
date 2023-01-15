@@ -28,7 +28,6 @@ When app is running go to `localhost:8080/docs` or `localhost:8080/redoc` for in
 ## Style guide
 
 Used `black` formatter (line length 88 symbols), `mypy` linter.
-Import style from my old work.
 
 ## Tests
 
