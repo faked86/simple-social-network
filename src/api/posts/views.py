@@ -18,8 +18,15 @@ from .core import (
 posts_router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
+# Not using common_responses because mypy does not allow it
+# common_responses = {401: {"description": "Could not validate credentials"}}
+
+
 @posts_router.post(
-    "", status_code=status.HTTP_201_CREATED, response_model=PostOutForUser
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=PostOutForUser,
+    responses={401: {"description": "Could not validate credentials"}},
 )
 async def create_post_view(
     post: PostIn,
@@ -30,7 +37,11 @@ async def create_post_view(
     return await create_post(user_id, post, db)
 
 
-@posts_router.get("", response_model=list[PostOutForUser])
+@posts_router.get(
+    "",
+    response_model=list[PostOutForUser],
+    responses={401: {"description": "Could not validate credentials"}},
+)
 async def get_all_posts_view(
     query: str = "",
     offset: int = 0,
@@ -42,7 +53,14 @@ async def get_all_posts_view(
     return await get_all_posts(query, offset, limit, user_id, db)
 
 
-@posts_router.get("/{post_id}", response_model=PostOutForUser)
+@posts_router.get(
+    "/{post_id}",
+    response_model=PostOutForUser,
+    responses={
+        401: {"description": "Could not validate credentials"},
+        404: {"description": "No such post."},
+    },
+)
 async def get_single_post_view(
     post_id: int,
     user_id: int = Depends(get_current_user),
@@ -52,7 +70,15 @@ async def get_single_post_view(
     return await get_single_post(user_id, post_id, db)
 
 
-@posts_router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+@posts_router.delete(
+    "/{post_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        401: {"description": "Could not validate credentials"},
+        403: {"description": "It's not your post."},
+        404: {"description": "No such post."},
+    },
+)
 async def delete_post_view(
     post_id: int,
     user_id: int = Depends(get_current_user),
@@ -62,7 +88,15 @@ async def delete_post_view(
     await delete_post(post_id, user_id, db)
 
 
-@posts_router.patch("/{post_id}", response_model=PostOutForUser)
+@posts_router.patch(
+    "/{post_id}",
+    response_model=PostOutForUser,
+    responses={
+        401: {"description": "Could not validate credentials"},
+        403: {"description": "It's not your post."},
+        404: {"description": "No such post."},
+    },
+)
 async def update_post_view(
     post_id: int,
     new_post: PostIn,
@@ -73,7 +107,15 @@ async def update_post_view(
     return await update_post(post_id, new_post, user_id, db)
 
 
-@posts_router.post("/{post_id}/{vote_type}", status_code=status.HTTP_204_NO_CONTENT)
+@posts_router.post(
+    "/{post_id}/{vote_type}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        401: {"description": "Could not validate credentials"},
+        403: {"description": "It's your post."},
+        404: {"description": "No such post."},
+    },
+)
 async def vote_post_view(
     vote_type: VoteType,
     post_id: int,
