@@ -1,11 +1,11 @@
-from fastapi import APIRouter, status, Depends, Response
+from fastapi import APIRouter, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...api.posts.schemas import PostIn, PostOutForUser
-from ...external.db.session import get_session
-from ...external.oauth2.core import get_current_user
-from ...utils_classes import VoteType
-from .core import (
+from src.api.posts.schemas import PostIn, PostOutForUser
+from src.external.db.session import get_session
+from src.external.oauth2.core import get_current_user
+from src.utils_classes import VoteType
+from src.api.posts.core import (
     create_post,
     delete_post,
     vote_post,

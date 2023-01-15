@@ -1,8 +1,8 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...external.db.models import Post, Vote
-from ...utils_classes import VoteType
+from src.external.db.models import Post, Vote
+from src.utils_classes import VoteType
 
 
 async def get_post_from_db(post_id: int, db: AsyncSession) -> Post:

@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from ...utils_classes import VoteType
+from src.utils_classes import VoteType
 
 
 class PostIn(BaseModel):
