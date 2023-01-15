@@ -1,7 +1,15 @@
 from loguru import logger
-from sqlalchemy import Column, Enum, ForeignKey, func, Integer, String, TIMESTAMP
-from sqlalchemy.exc import MissingGreenlet
+from sqlalchemy import (
+    Column,
+    Enum,
+    ForeignKey,
+    func,
+    Integer,
+    String,
+    TIMESTAMP,
+)
 from sqlalchemy.orm import Mapped, relationship
+
 
 from ...utils_classes import VoteType
 from .session import Base
@@ -35,38 +43,8 @@ class Post(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
-    owner: "User" = relationship("User", back_populates="posts")
-    votes: list["Vote"] = relationship(
-        "Vote",
-        lazy="selectin",
-        cascade="all, delete-orphan",
-    )
-
-    @property
-    def like_count(self) -> int:
-        try:
-            return sum(
-                map(
-                    lambda x: True if x.vote_type is VoteType.LIKE else False,
-                    self.votes,
-                )
-            )
-        except MissingGreenlet:
-            logger.warning("Likes can't be loaded. MissingGreenlet error.")
-            return 0
-
-    @property
-    def dislike_count(self) -> int:
-        try:
-            return sum(
-                map(
-                    lambda x: True if x.vote_type is VoteType.DISLIKE else False,
-                    self.votes,
-                )
-            )
-        except MissingGreenlet:
-            logger.warning("Dislikes can't be loaded. MissingGreenlet error.")
-            return 0
+    owner: Mapped["User"] = relationship("User")
+    votes: Mapped["Vote"] = relationship("Vote")
 
 
 class Vote(Base):

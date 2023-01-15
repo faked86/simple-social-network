@@ -2,13 +2,12 @@ from datetime import datetime
 
 from fastapi import HTTPException, status
 from sqlalchemy import desc, select
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.utils_classes import VoteType
-
 from ...external.db.models import Post, Vote
-from .schemas import PostIn, VoteIn
+from ...utils_classes import VoteType
+from .schemas import PostIn
+from .utils import get_post_from_db, update_vote_count
 
 
 async def create_post(user_id: int, post_in: PostIn, db: AsyncSession) -> Post:
@@ -18,6 +17,7 @@ async def create_post(user_id: int, post_in: PostIn, db: AsyncSession) -> Post:
     await db.commit()
     await db.refresh(new_post)
 
+    await update_vote_count(new_post, db)
     return new_post
 
 
@@ -33,30 +33,29 @@ async def get_all_posts(
         .order_by(desc(Post.created_at))
         .limit(limit)
         .offset(offset)
-        .options(selectinload(Post.votes))
     )
     res = await db.execute(db_query)
     posts = res.scalars().all()
+
+    for post in posts:
+        await update_vote_count(post, db)
 
     return posts
 
 
 async def get_single_post(post_id: int, db: AsyncSession) -> Post:
     """Retrieves one post by 'post_id' from 'db'."""
-    db_query = select(Post).where(Post.id == post_id).options(selectinload(Post.votes))
-    res = await db.execute(db_query)
-    post = res.scalars().first()
+    post = await get_post_from_db(post_id, db)
     if not post:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such post.")
 
+    await update_vote_count(post, db)
     return post
 
 
 async def delete_post(post_id: int, user_id: int, db: AsyncSession) -> None:
     """Deletes post by 'post_id' and 'user_id' from 'db'."""
-    db_query = select(Post).where(Post.id == post_id).options(selectinload(Post.votes))
-    res = await db.execute(db_query)
-    post: Post = res.scalars().first()
+    post = await get_post_from_db(post_id, db)
 
     if not post:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such post.")
@@ -71,9 +70,7 @@ async def update_post(
     post_id: int, new_post: PostIn, user_id: int, db: AsyncSession
 ) -> Post:
     """Updates post by 'post_id' and 'user_id' in 'db'."""
-    db_query = select(Post).where(Post.id == post_id).options(selectinload(Post.votes))
-    res = await db.execute(db_query)
-    post: Post = res.scalars().first()
+    post = await get_post_from_db(post_id, db)
 
     if not post:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such post.")
@@ -85,23 +82,27 @@ async def update_post(
 
     await db.commit()
 
+    await update_vote_count(post, db)
     return post
 
 
 async def vote_post(vote_type: VoteType, user_id: int, post_id: int, db: AsyncSession):
-    """Leaves vote for post in 'db'."""
-    db_query = select(Post).where(Post.id == post_id)
-    res = await db.execute(db_query)
-    post: Post = res.scalars().first()
+    """
+    Leaves vote for post in 'db'.
+
+    If opposite vote exists then updates vote.
+    If same vote exists then discards.
+    """
+    post = await get_post_from_db(post_id, db)
 
     if not post:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such post.")
     if post.owner_id == user_id:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "It's your post.")
 
-    vote_old = next(
-        filter(lambda x: True if x.user_id == user_id else False, post.votes), None
-    )
+    query = select(Vote).where(Vote.post_id == post_id, Vote.user_id == user_id)
+    res = await db.execute(query)
+    vote_old = res.scalars().first()
 
     if vote_old:
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...api.posts.schemas import VoteOut, PostIn, PostOut, VoteIn
+from ...api.posts.schemas import PostIn, PostOut
 from ...external.db.session import get_session
 from ...external.oauth2.core import get_current_user
 from ...utils_classes import VoteType
@@ -78,5 +78,10 @@ async def vote_post_view(
     user_id: int = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ):
-    """Vote for post."""
+    """
+    Vote for post.
+
+    If opposite vote exists then updates vote.
+    If same vote exists then discards.
+    """
     await vote_post(vote_type, user_id, post_id, db)
