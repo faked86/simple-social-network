@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...api.posts.schemas import PostIn, PostOut
+from ...api.posts.schemas import PostIn, PostOutForUser
 from ...external.db.session import get_session
 from ...external.oauth2.core import get_current_user
 from ...utils_classes import VoteType
@@ -18,7 +18,9 @@ from .core import (
 posts_router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
-@posts_router.post("", status_code=status.HTTP_201_CREATED, response_model=PostOut)
+@posts_router.post(
+    "", status_code=status.HTTP_201_CREATED, response_model=PostOutForUser
+)
 async def create_post_view(
     post: PostIn,
     user_id: int = Depends(get_current_user),
@@ -28,26 +30,26 @@ async def create_post_view(
     return await create_post(user_id, post, db)
 
 
-@posts_router.get("", response_model=list[PostOut])
+@posts_router.get("", response_model=list[PostOutForUser])
 async def get_all_posts_view(
     query: str = "",
     offset: int = 0,
     limit: int = 10,
-    _: int = Depends(get_current_user),
+    user_id: int = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ):
     """Retrieve all posts from db filtered by 'query', offsetted and limited."""
-    return await get_all_posts(query, offset, limit, db)
+    return await get_all_posts(query, offset, limit, user_id, db)
 
 
-@posts_router.get("/{post_id}", response_model=PostOut)
+@posts_router.get("/{post_id}", response_model=PostOutForUser)
 async def get_single_post_view(
     post_id: int,
-    _: int = Depends(get_current_user),
+    user_id: int = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ):
     """Retrieve one post by 'post_id'."""
-    return await get_single_post(post_id, db)
+    return await get_single_post(user_id, post_id, db)
 
 
 @posts_router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -60,7 +62,7 @@ async def delete_post_view(
     await delete_post(post_id, user_id, db)
 
 
-@posts_router.patch("/{post_id}", response_model=PostOut)
+@posts_router.patch("/{post_id}", response_model=PostOutForUser)
 async def update_post_view(
     post_id: int,
     new_post: PostIn,

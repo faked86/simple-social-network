@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...external.db.models import Post, Vote
 from ...utils_classes import VoteType
 from .schemas import PostIn
-from .utils import get_post_from_db, update_vote_count
+from .utils import get_post_from_db, update_post_for_user, update_votes
 
 
 async def create_post(user_id: int, post_in: PostIn, db: AsyncSession) -> Post:
@@ -17,12 +17,12 @@ async def create_post(user_id: int, post_in: PostIn, db: AsyncSession) -> Post:
     await db.commit()
     await db.refresh(new_post)
 
-    await update_vote_count(new_post, db)
+    await update_post_for_user(user_id, new_post, db)
     return new_post
 
 
 async def get_all_posts(
-    query: str | None, offset: int, limit: int, db: AsyncSession
+    query: str | None, offset: int, limit: int, user_id: int, db: AsyncSession
 ) -> list[Post]:
     """
     Retrieves all posts from db filtered by 'query', offsetted and limited from 'db'.
@@ -38,18 +38,18 @@ async def get_all_posts(
     posts = res.scalars().all()
 
     for post in posts:
-        await update_vote_count(post, db)
+        await update_post_for_user(user_id, post, db)
 
     return posts
 
 
-async def get_single_post(post_id: int, db: AsyncSession) -> Post:
+async def get_single_post(user_id: int, post_id: int, db: AsyncSession) -> Post:
     """Retrieves one post by 'post_id' from 'db'."""
     post = await get_post_from_db(post_id, db)
     if not post:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such post.")
 
-    await update_vote_count(post, db)
+    await update_post_for_user(user_id, post, db)
     return post
 
 
@@ -82,7 +82,7 @@ async def update_post(
 
     await db.commit()
 
-    await update_vote_count(post, db)
+    await update_post_for_user(user_id, post, db)
     return post
 
 
@@ -102,7 +102,7 @@ async def vote_post(vote_type: VoteType, user_id: int, post_id: int, db: AsyncSe
 
     query = select(Vote).where(Vote.post_id == post_id, Vote.user_id == user_id)
     res = await db.execute(query)
-    vote_old = res.scalars().first()
+    vote_old: Vote = res.scalars().first()
 
     if vote_old:
 

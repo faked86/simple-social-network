@@ -2,15 +2,18 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+from ...utils_classes import VoteType
+
 
 class PostIn(BaseModel):
     content: str
 
 
-class PostOut(BaseModel):
+class PostOutForUser(BaseModel):
     id: int
     content: str
     owner_id: int
+    voted: VoteType | None
     like_count: int
     dislike_count: int
     created_at: datetime
