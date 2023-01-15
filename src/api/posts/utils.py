@@ -1,7 +1,7 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.external.db.models import Post, Vote
+from src.db_models import Post, Vote
 from src.utils_classes import VoteType
 
 

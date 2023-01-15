@@ -1,4 +1,3 @@
-from loguru import logger
 from sqlalchemy import (
     Column,
     Enum,
@@ -10,9 +9,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, relationship
 
-
-from ...utils_classes import VoteType
-from .session import Base
+from src.utils_classes import VoteType
+from src.db.session import Base
 
 
 class User(Base):

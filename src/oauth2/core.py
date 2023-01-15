@@ -6,10 +6,9 @@ from jose import JWTError, jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...settings import settings
-from ..db.models import User
-from ..db.session import get_session
-from .schemas import TokenData
+from src.settings import settings
+from src.db_models import User
+from src.db.session import get_session
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -25,7 +24,7 @@ def create_access_token(data: dict) -> str:
     return encoded_jwt
 
 
-def verify_access_token(token: str, credentials_exception) -> TokenData:
+def get_id_from_access_token(token: str, credentials_exception) -> int:
     try:
         payload = jwt.decode(token, settings.secret, [settings.algorithm])
         idx = payload.get("user_id")
@@ -33,11 +32,10 @@ def verify_access_token(token: str, credentials_exception) -> TokenData:
         if idx is None:
             raise credentials_exception
 
-        token_data = TokenData(id=idx)
     except JWTError:
         raise credentials_exception
 
-    return token_data
+    return idx
 
 
 async def get_current_user(
@@ -50,7 +48,7 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    user_id = verify_access_token(token, credentials_exception).id
+    user_id = get_id_from_access_token(token, credentials_exception)
 
     query = select(User).where(User.id == user_id)
     res = await db.execute(query)
