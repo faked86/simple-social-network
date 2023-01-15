@@ -25,7 +25,7 @@ App will work on `localhost:8080`. Database will work on `localhost:5432`.
 
 When app is running go to `localhost:8080/docs` or `localhost:8080/redoc` for interactive docs.
 
-## Styleguide
+## Style guide
 
 Used `black` formatter (line length 88 symbols), `mypy` linter.
 Import style from my old work.
