@@ -4,10 +4,10 @@ from loguru import logger
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...external.db.models import User
-from ...external.oauth2.core import create_access_token
-from .schemas import UserIn
-from .utils import hash_password, verify
+from src.db_models import User
+from src.oauth2.core import create_access_token
+from src.api_models import UserIn
+from src.api.auth.utils import hash_password, verify
 
 
 async def create_user(user: UserIn, db: AsyncSession) -> User:
