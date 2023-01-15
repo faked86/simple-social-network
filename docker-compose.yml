@@ -1,0 +1,30 @@
+version: '3'
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8000"
+    depends_on:
+      - postgres
+    environment:
+      - secret=20f83b82927d6ed63cbf4ff736090bef
+      - algorithm=HS256
+      - access_token_expire_minutes=5
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DATABASE_NAME=simple_social_network
+  postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=simple_social_network
+    ports:
+      - "5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+
+volumes:
+  db:
