@@ -17,11 +17,18 @@ cd simple-social-network
 ## Usage
 
 - Run `docker-compose up -d` in terminal to start app in Docker.
+App will work on `localhost:8080`. Database will work on `localhost:5432`.
+
 - Run `docker-compose down` in terminal to stop app in Docker.
 
 ## Interactive docs
 
 When app is running go to `localhost:8080/docs` or `localhost:8080/redoc` for interactive docs.
+
+## Styleguide
+
+Used `black` formatter (line length 88 symbols), `mypy` linter.
+Import style from my old work.
 
 ## Tests
 
