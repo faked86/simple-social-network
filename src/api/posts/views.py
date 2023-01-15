@@ -1,9 +1,10 @@
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...api.posts.schemas import VoteOut, PostIn, PostOut, VoteIn
 from ...external.db.session import get_session
 from ...external.oauth2.core import get_current_user
+from ...utils_classes import VoteType
 from .core import (
     create_post,
     delete_post,
@@ -70,14 +71,12 @@ async def update_post_view(
     return await update_post(post_id, new_post, user_id, db)
 
 
-@posts_router.post(
-    "/{post_id}", status_code=status.HTTP_201_CREATED, response_model=VoteOut | None
-)
+@posts_router.post("/{post_id}/{vote_type}", status_code=status.HTTP_204_NO_CONTENT)
 async def vote_post_view(
-    vote: VoteIn,
+    vote_type: VoteType,
     post_id: int,
     user_id: int = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ):
     """Vote for post."""
-    return await vote_post(vote, user_id, post_id, db)
+    await vote_post(vote_type, user_id, post_id, db)

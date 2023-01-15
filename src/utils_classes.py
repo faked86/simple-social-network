@@ -1,7 +1,6 @@
 from enum import Enum
 
 
-class VoteType(Enum):
+class VoteType(str, Enum):
     LIKE = "like"
     DISLIKE = "dislike"
-    NEUTRAL = "neutral"

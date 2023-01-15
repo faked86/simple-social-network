@@ -46,7 +46,7 @@ async def get_single_post(post_id: int, db: AsyncSession) -> Post:
     db_query = select(Post).where(Post.id == post_id).options(selectinload(Post.votes))
     res = await db.execute(db_query)
     post = res.scalars().first()
-    if post is None:
+    if not post:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such post.")
 
     return post
@@ -58,7 +58,7 @@ async def delete_post(post_id: int, user_id: int, db: AsyncSession) -> None:
     res = await db.execute(db_query)
     post: Post = res.scalars().first()
 
-    if post is None:
+    if not post:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such post.")
     if post.owner_id != user_id:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "It's not your post.")
@@ -75,7 +75,7 @@ async def update_post(
     res = await db.execute(db_query)
     post: Post = res.scalars().first()
 
-    if post is None:
+    if not post:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such post.")
     if post.owner_id != user_id:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "It's not your post.")
@@ -88,40 +88,32 @@ async def update_post(
     return post
 
 
-async def vote_post(
-    vote_in: VoteIn, user_id: int, post_id: int, db: AsyncSession
-) -> Vote | None:
-    """Leave vote for post in 'db'."""
+async def vote_post(vote_type: VoteType, user_id: int, post_id: int, db: AsyncSession):
+    """Leaves vote for post in 'db'."""
     db_query = select(Post).where(Post.id == post_id)
     res = await db.execute(db_query)
     post: Post = res.scalars().first()
 
-    if post is None:
+    if not post:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such post.")
     if post.owner_id == user_id:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "It's your post.")
 
-    query = select(Vote).where(Vote.post_id == post_id and Vote.user_id == user_id)
-    res = await db.execute(query)
-    vote_old: Vote = res.scalars().first()
+    vote_old = next(
+        filter(lambda x: True if x.user_id == user_id else False, post.votes), None
+    )
 
-    if vote_old is not None:
+    if vote_old:
 
-        if vote_in.vote_type is VoteType.NEUTRAL:
-            await db.delete(vote_old)
+        if vote_old.vote_type != vote_type:
+            vote_old.vote_type = vote_type
             await db.commit()
-            return None
+            return
 
-        vote_old.vote_type = vote_in.vote_type
+        await db.delete(vote_old)
         await db.commit()
-        return vote_old
+        return
 
-    if vote_in.vote_type is VoteType.NEUTRAL:
-        return None
-
-    vote_new = Vote(post_id=post_id, user_id=user_id, vote_type=vote_in.vote_type)
+    vote_new = Vote(post_id=post_id, user_id=user_id, vote_type=vote_type)
     db.add(vote_new)
     await db.commit()
-    await db.refresh(vote_new)
-
-    return vote_new
