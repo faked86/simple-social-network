@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...external.db.models import Post, Vote
 from ...utils_classes import VoteType
 from .schemas import PostIn
-from .utils import get_post_from_db, update_post_for_user, update_votes
+from .utils import get_post_from_db, update_post_for_user
 
 
 async def create_post(user_id: int, post_in: PostIn, db: AsyncSession) -> Post:
