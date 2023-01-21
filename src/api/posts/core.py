@@ -4,9 +4,9 @@ from fastapi import HTTPException, status
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db_models import Post, Vote
+from src.db.db_models import Post, Vote
 from src.utils_classes import VoteType
-from src.api_models import PostIn
+from src.api.api_models import PostIn
 from src.api.posts.utils import get_post_from_db, update_post_for_user
 
 
