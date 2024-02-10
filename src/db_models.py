@@ -23,7 +23,7 @@ class User(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    posts: Mapped[list["Post"]] = relationship("Post", back_populates="owner")
+    posts: Mapped[list["Post"]] = relationship(back_populates="owner")  # type: ignore
 
 
 class Post(Base):
@@ -41,8 +41,8 @@ class Post(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
-    owner: Mapped["User"] = relationship("User")
-    votes: Mapped["Vote"] = relationship("Vote")
+    owner: Mapped["User"] = relationship()  # type: ignore
+    votes: Mapped[list["Vote"]] = relationship()  # type: ignore
 
 
 class Vote(Base):
